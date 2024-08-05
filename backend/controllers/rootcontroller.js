@@ -1,0 +1,3 @@
+const rootcontroller = (req,res)=>{
+    
+}
