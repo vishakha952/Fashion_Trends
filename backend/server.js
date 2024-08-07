@@ -7,6 +7,7 @@ const productroute = require("./routes/productroute");
 const connectDB = require("./config/db");
 
 const PORT = process.env.PORT || 6000 || 8080;
+connectDB();
 const app = express();
 
 app.use("/",rootroute);
