@@ -1,37 +1,54 @@
- const mongoose = require("mongoose");
- const ProductCollection =require("..//../models/ProductSchema");
- const getproductcontroller =async(req,res)=>{
- try{
-    const{category,name,subcategory}=req.params;
-    let products;
-   if(category) {
-   const searchcategory =category.toLowerCase();
-   products =await ProductCollection.find( {
-   category:{$regex:new RegExp(searchcategory,"i")},
-   });
-   }else if(name){
-    const searchname =name.toLowerCase();
-   products =await ProductCollection.find( {
-   name:{$regex:new RegExp(searchname,"i")},
-   });
-}else if(subcategory){
-    const searchsubcategory =subcategory.toLowerCase();
-    products =await ProductCollection.find( {
-    sub_category:{$regex:new RegExp(searchsubcategory,"i")},
-    });
-}else
-   {
-    products =await ProductCollection.find();
-    console.log(`Product fetched successfully`);
-   }
-   if(!products || products.length === 0)
-    return res.status(404).send({ message:"product not found"});
-   res.status(200).send(products);
-}catch(error){
-res.status(504).send({
-    message:"Error fetching products",
-});
-console.log(`Error occured:${error}`);
- }
- };
-module.exports= getproductcontroller;
+const mongoose = require("mongoose");
+const productcollection = require("../../models/ProductSchema");
+const getproductcontroller = async (req, res) => {
+  try {
+    const { id, category, name, subcategory } = req.params;
+    let product;
+
+    if (category) {
+      const searchCategory = category.toLowerCase();
+      product = await productcollection.find({
+        category: { $regex: new RegExp(searchCategory, "i") },
+      });
+    } else if (name) {
+      const searchName = name.toLowerCase();
+      product = await productcollection.find({
+        name: { $regex: new RegExp(searchName, "i") },
+      });
+    } else if (subcategory) {
+      const searchSubcategory = subcategory.toLowerCase();
+      product = await productcollection.find({
+        sub_category: { $regex: new RegExp(searchSubcategory, "i") },
+      });
+    } else if (id) {
+      product = await productcollection.find({ _id: id });
+    } else if (req.path.includes("/random")) {
+      product = await productcollection.aggregate([
+        {
+          $sample: {
+            size: 9,
+          },
+        },
+      ]);
+    } else if (req.path.includes("/top-rated")) {
+      product = await productcollection.find().sort({ rating: -1 }).limit(9);
+    } else if (req.path.includes("lowtohigh")) {
+      product = await productcollection.find().sort({ new_price: +1 });
+    } else if (req.path.includes("hightolow")) {
+      product = await productcollection.find().sort({ new_price: -1 });
+    } else {
+      product = await productcollection.find();
+    }
+
+    if (!product || product.length === 0) {
+      res.status(404).send({ message: "No products found" });
+    } else {
+      res.status(200).send(product);
+    }
+    console.log("Product fetched successfully");
+  } catch (error) {
+    res.status(500).send({ message: "Error in fetching data" });
+    console.error(`Error occurred: ${error}`);
+  }
+};
+module.exports = getproductcontroller;
